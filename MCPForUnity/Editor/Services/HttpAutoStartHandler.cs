@@ -10,7 +10,7 @@ using UnityEngine;
 namespace MCPForUnity.Editor.Services
 {
     /// <summary>
-    /// Automatically starts the HTTP MCP bridge on editor load when the user has opted in
+    /// Automatically starts the HTTP MCP bridge on editor load unless the user has opted out
     /// via the "Auto-Start on Editor Load" toggle in Advanced Settings.
     /// This complements HttpBridgeReloadHandler (which only resumes after domain reloads).
     /// </summary>
@@ -33,7 +33,7 @@ namespace MCPForUnity.Editor.Services
 
             // Only check lightweight EditorPrefs here — services like EditorConfigurationCache
             // and MCPServiceLocator may not be initialized yet on fresh editor launch.
-            bool autoStartEnabled = EditorPrefs.GetBool(EditorPrefKeys.AutoStartOnLoad, false);
+            bool autoStartEnabled = EditorPrefs.GetBool(EditorPrefKeys.AutoStartOnLoad, true);
             if (!autoStartEnabled) return;
 
             SessionState.SetBool(SessionInitKey, true);
@@ -46,7 +46,7 @@ namespace MCPForUnity.Editor.Services
         {
             try
             {
-                bool autoStartEnabled = EditorPrefs.GetBool(EditorPrefKeys.AutoStartOnLoad, false);
+                bool autoStartEnabled = EditorPrefs.GetBool(EditorPrefKeys.AutoStartOnLoad, true);
                 if (!autoStartEnabled) return;
 
                 bool useHttp = EditorConfigurationCache.Instance.UseHttpTransport;
@@ -123,7 +123,7 @@ namespace MCPForUnity.Editor.Services
             while (true)
             {
                 // Abort if user changed settings while we were waiting.
-                if (!EditorPrefs.GetBool(EditorPrefKeys.AutoStartOnLoad, false)) return;
+                if (!EditorPrefs.GetBool(EditorPrefKeys.AutoStartOnLoad, true)) return;
                 if (!EditorConfigurationCache.Instance.UseHttpTransport) return;
                 if (MCPServiceLocator.TransportManager.IsRunning(TransportMode.Http)) return;
 
