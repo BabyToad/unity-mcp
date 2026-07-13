@@ -15,6 +15,9 @@ namespace MCPForUnity.Editor.Helpers
     /// </summary>
     public static class AssetPathUtility
     {
+        private const string DefaultServerPackageSource =
+            "git+https://github.com/BabyToad/unity-mcp.git@300745322eb2a67861323003cf3c6170cbf81e23#subdirectory=Server";
+
         /// <summary>
         /// Normalizes path separators to forward slashes without modifying the path structure.
         /// Use this for non-asset paths (e.g., file system paths, relative directories).
@@ -205,7 +208,7 @@ namespace MCPForUnity.Editor.Helpers
         /// <summary>
         /// Gets the package source for the MCP server (used with uvx --from).
         /// Checks for EditorPrefs override first (supports git URLs, file:// paths, etc.),
-        /// then falls back to PyPI package reference.
+        /// then falls back to the PlayInsight-reviewed, immutable fork revision.
         /// When the override is a local path, auto-corrects to the "Server" subdirectory
         /// if the path doesn't contain pyproject.toml but Server/pyproject.toml exists.
         /// </summary>
@@ -226,22 +229,7 @@ namespace MCPForUnity.Editor.Helpers
                 return resolved;
             }
 
-            // Default to PyPI package (avoids Windows long path issues with git clone)
-            string version = GetPackageVersion();
-            if (version == "unknown")
-            {
-                // Fall back to latest PyPI version so configs remain valid in test scenarios
-                return "mcpforunityserver";
-            }
-
-            // Package.json uses semver prerelease tags (e.g., 9.4.5-beta.1) that are not valid
-            // PEP 440 pins for uvx. Use the beta prerelease range instead of a pinned prerelease.
-            if (IsSemVerPreRelease(version))
-            {
-                return "mcpforunityserver>=0.0.0a0";
-            }
-
-            return $"mcpforunityserver=={version}";
+            return DefaultServerPackageSource;
         }
 
         /// <summary>
