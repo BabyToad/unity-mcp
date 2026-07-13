@@ -141,10 +141,14 @@ class TelemetryConfig:
             except Exception:
                 continue
 
-        # Determine enabled flag: config -> env DISABLE_* opt-out
-        cfg_enabled = True if server_config is None else bool(
-            getattr(server_config, "telemetry_enabled", True))
-        self.enabled = cfg_enabled and not self._is_disabled()
+        # Telemetry is opt-in in the PlayInsight fork. The config default is
+        # disabled and an explicit environment variable may enable it. The
+        # existing DISABLE_* variables always win so automation can fail safe.
+        cfg_enabled = False if server_config is None else bool(
+            getattr(server_config, "telemetry_enabled", False))
+        env_enabled = os.environ.get(
+            "UNITY_MCP_ENABLE_TELEMETRY", "").lower() in ("true", "1", "yes", "on")
+        self.enabled = (cfg_enabled or env_enabled) and not self._is_disabled()
 
         # Telemetry endpoint (Cloud Run default; override via env)
         cfg_default = None if server_config is None else getattr(

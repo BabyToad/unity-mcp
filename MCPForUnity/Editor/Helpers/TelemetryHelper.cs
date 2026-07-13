@@ -9,7 +9,7 @@ namespace MCPForUnity.Editor.Helpers
 {
     /// <summary>
     /// Unity Bridge telemetry helper for collecting usage analytics
-    /// Following privacy-first approach with easy opt-out mechanisms
+    /// Telemetry is opt-in in the PlayInsight fork.
     /// </summary>
     public static class TelemetryHelper
     {
@@ -18,12 +18,22 @@ namespace MCPForUnity.Editor.Helpers
         private static Action<Dictionary<string, object>> s_sender;
 
         /// <summary>
-        /// Check if telemetry is enabled (can be disabled via Environment Variable or EditorPrefs)
+        /// Check if telemetry was explicitly enabled and was not disabled by an override.
         /// </summary>
         public static bool IsEnabled
         {
             get
             {
+                var envEnable = Environment.GetEnvironmentVariable("UNITY_MCP_ENABLE_TELEMETRY");
+                if (string.IsNullOrEmpty(envEnable) ||
+                    !(envEnable.Equals("true", StringComparison.OrdinalIgnoreCase) ||
+                      envEnable == "1" ||
+                      envEnable.Equals("yes", StringComparison.OrdinalIgnoreCase) ||
+                      envEnable.Equals("on", StringComparison.OrdinalIgnoreCase)))
+                {
+                    return false;
+                }
+
                 // Check environment variables first
                 var envDisable = Environment.GetEnvironmentVariable("DISABLE_TELEMETRY");
                 if (!string.IsNullOrEmpty(envDisable) &&

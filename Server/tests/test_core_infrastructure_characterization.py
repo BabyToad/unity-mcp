@@ -693,7 +693,7 @@ class TestServerConfigDefaults:
         """Verify telemetry configuration defaults."""
         config = ServerConfig()
 
-        assert config.telemetry_enabled is True
+        assert config.telemetry_enabled is False
         assert config.telemetry_endpoint == "https://api-prod.coplay.dev/telemetry/events"
 
     def test_config_is_dataclass(self):
@@ -800,17 +800,49 @@ class TestTelemetryConfigPrecedence:
     """
 
     def test_telemetry_config_enabled_from_server_config(self):
-        """Verify telemetry enabled flag comes from ServerConfig."""
+        """Verify telemetry can be enabled explicitly by ServerConfig."""
         with patch("core.telemetry.import_module") as mock_import:
             mock_config = MagicMock()
-            mock_config.telemetry_enabled = False
+            mock_config.telemetry_enabled = True
+            mock_config.telemetry_endpoint = "https://api-prod.coplay.dev/telemetry/events"
             mock_module = MagicMock()
             mock_module.config = mock_config
             mock_import.return_value = mock_module
 
-            config = TelemetryConfig()
+            with patch.dict(os.environ, {
+                "DISABLE_TELEMETRY": "false",
+                "UNITY_MCP_DISABLE_TELEMETRY": "false",
+                "MCP_DISABLE_TELEMETRY": "false",
+            }):
+                config = TelemetryConfig()
 
-            assert config.enabled is False
+            assert config.enabled is True
+
+    def test_telemetry_config_disabled_by_default_without_server_config(self):
+        """Verify missing configuration fails closed."""
+        with patch("core.telemetry.import_module", side_effect=Exception("No module")):
+            with patch.dict(os.environ, {
+                "DISABLE_TELEMETRY": "false",
+                "UNITY_MCP_DISABLE_TELEMETRY": "false",
+                "MCP_DISABLE_TELEMETRY": "false",
+                "UNITY_MCP_ENABLE_TELEMETRY": "false",
+            }):
+                config = TelemetryConfig()
+
+        assert config.enabled is False
+
+    def test_telemetry_config_enabled_via_explicit_env_opt_in(self):
+        """Verify telemetry requires an explicit opt-in when config is absent."""
+        with patch("core.telemetry.import_module", side_effect=Exception("No module")):
+            with patch.dict(os.environ, {
+                "DISABLE_TELEMETRY": "false",
+                "UNITY_MCP_DISABLE_TELEMETRY": "false",
+                "MCP_DISABLE_TELEMETRY": "false",
+                "UNITY_MCP_ENABLE_TELEMETRY": "true",
+            }):
+                config = TelemetryConfig()
+
+        assert config.enabled is True
 
     def test_telemetry_config_disabled_via_env_opt_out(self):
         """Verify telemetry can be disabled via environment variables.

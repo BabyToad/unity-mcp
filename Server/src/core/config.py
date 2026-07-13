@@ -57,8 +57,9 @@ class ServerConfig:
     # Port discovery cache
     port_registry_ttl: float = 5.0
 
-    # Telemetry settings
-    telemetry_enabled: bool = True
+    # Telemetry is opt-in in the PlayInsight fork. Set
+    # UNITY_MCP_ENABLE_TELEMETRY=1 to enable it explicitly.
+    telemetry_enabled: bool = False
     # Align with telemetry.py default Cloud Run endpoint
     telemetry_endpoint: str = "https://api-prod.coplay.dev/telemetry/events"
 
